@@ -38,7 +38,7 @@ UKF::UKF() {
   std_a_ = 2;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 2;
+  std_yawdd_ = 0.5;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -141,9 +141,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 		P_.fill(0.0);
 		P_(0, 0) = 0.5;
 		P_(1, 1) = 0.5;
-		P_(2, 2) = 3;
-		P_(3, 3) = 3;
-		P_(4, 4) = 3;
+		P_(2, 2) = 1;
+		P_(3, 3) = 1;
+		P_(4, 4) = 1;
 
 		is_initialized_ = true;
 		cout << "Unscented Kalman Filter was initialized with " << endl;
