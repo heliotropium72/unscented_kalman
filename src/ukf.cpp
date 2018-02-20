@@ -148,7 +148,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 		return;
 	}
     
-	cout << "Unscented Kalman Filter was initialized." << endl;
+	cout << "Unscented Kalman Filter was initialized with " << endl;
 	cout << "Laser: " << use_laser_ << endl << "Radar: " << use_radar_ << endl;
 
 	/*****************************************************************************
@@ -199,6 +199,7 @@ void UKF::Prediction(double delta_t) {
 	P_aug(5, 5) = std_a_ * std_a_;
 	P_aug(6, 6) = std_yawdd_ * std_yawdd_;
 
+	cout << "Checkpoint augmented" << endl;
 	//create square root matrix
 	MatrixXd L = P_aug.llt().matrixL();
 
@@ -210,7 +211,7 @@ void UKF::Prediction(double delta_t) {
 		Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
 		Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) * L.col(i);
 	}
-
+	cout << "Checkpoint xsig_aug " << endl;
   // Predict sigma points after time delta_t
 	for (int i = 0; i<2 * n_aug_ + 1; i++) {
 		VectorXd x = Xsig_aug.col(i);
@@ -236,7 +237,7 @@ void UKF::Prediction(double delta_t) {
 
 		Xsig_pred_.col(i) = x.head(5);
 	}
-
+	cout << "Checkpoint xsig_pred" << endl;
   // Predict mean state and state covariance matrix
 	//predict state mean
 	x_.fill(0.0);
