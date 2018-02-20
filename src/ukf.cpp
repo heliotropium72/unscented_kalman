@@ -183,7 +183,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-  
+	cout << "Checkpoint Prediction called " << endl;
   // Generate sigma points
 
 	//create augmented mean state
@@ -191,7 +191,7 @@ void UKF::Prediction(double delta_t) {
 	x_aug.head(n_x_) = x_;
 	x_aug(n_x_+1) = 0;
 	x_aug(n_x_+2) = 0;
-
+	cout << "Checkpoint x_aug " << x_aug << endl;
 	//create augmented covariance matrix
 	MatrixXd P_aug(n_aug_, n_aug_);
 	P_aug.fill(0.0);
