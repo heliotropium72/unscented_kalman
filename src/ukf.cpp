@@ -33,11 +33,12 @@ UKF::UKF() {
   // initial predicted sigma points matrix
   Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
 
+  // TUNE THESE TWO NOISE PARAMETERS !!!
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 2;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 1;
+  std_yawdd_ = 2;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -138,11 +139,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 		// (initial) state covariance matrix
 		P_ = MatrixXd(5, 5);
 		P_.fill(0.0);
-		P_(0, 0) = 1;
-		P_(1, 1) = 1;
-		P_(2, 2) = 1;
-		P_(3, 3) = 1;
-		P_(4, 4) = 1;
+		P_(0, 0) = 0.5;
+		P_(1, 1) = 0.5;
+		P_(2, 2) = 3;
+		P_(3, 3) = 3;
+		P_(4, 4) = 3;
 
 		is_initialized_ = true;
 		cout << "Unscented Kalman Filter was initialized with " << endl;
@@ -253,6 +254,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
 	  VectorXd z_diff = Zsig.col(i) - z_pred; //Difference between predicted sigma point and predicted mean state in measurement space
 	  VectorXd x_diff = Xsig_pred_.col(i) - x_; //Difference between predicted sigma point and predicted mean state
+	  //angle normalization
+	  while (x_diff(3)> M_PI) x_diff(3) -= 2.*M_PI;
+	  while (x_diff(3)<-M_PI) x_diff(3) += 2.*M_PI;
 	  S += weights_(i) * z_diff * z_diff.transpose();
 	  Tc += weights_(i) * x_diff * z_diff.transpose();
   }
@@ -300,36 +304,21 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   for (int i = 0; i < 2 * n_aug_ + 1; i++)
 	  z_pred = z_pred + weights_(i) * Zsig.col(i);
 
-  //innovation covariance matrix S
+  //innovation covariance matrix S and cross correlation matrix Tc
   MatrixXd S = MatrixXd(n_z, n_z);
-  S = R_radar_; // initialize with the noise term
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-	//residual
-	VectorXd z_diff = Zsig.col(i) - z_pred;
-	//angle normalization
-	while (z_diff(1)> M_PI) z_diff(1) -= 2.*M_PI;
-	while (z_diff(1)<-M_PI) z_diff(1) += 2.*M_PI;
-
-	S = S + weights_(i) * z_diff * z_diff.transpose();
-  }
-
-  //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd(n_x_, n_z);
+  S = R_radar_; // initialize with the noise term
   Tc.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    //residual
-	VectorXd z_diff = Zsig.col(i) - z_pred;
-	//angle normalization
-	while (z_diff(1)> M_PI) z_diff(1) -= 2.*M_PI;
+	VectorXd z_diff = Zsig.col(i) - z_pred; //Difference between predicted sigma point and predicted mean state in measurement space
+	while (z_diff(1)> M_PI) z_diff(1) -= 2.*M_PI; //angle normalization
 	while (z_diff(1)<-M_PI) z_diff(1) += 2.*M_PI;
-
-	// state difference
-	VectorXd x_diff = Xsig_pred_.col(i) - x_;
-	//angle normalization
-	while (x_diff(3)> M_PI) x_diff(3) -= 2.*M_PI;
+	VectorXd x_diff = Xsig_pred_.col(i) - x_; //Difference between predicted sigma point and predicted mean state
+	while (x_diff(3)> M_PI) x_diff(3) -= 2.*M_PI; //angle normalization
 	while (x_diff(3)<-M_PI) x_diff(3) += 2.*M_PI;
 
-	Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+	S += weights_(i) * z_diff * z_diff.transpose();
+	Tc += weights_(i) * x_diff * z_diff.transpose();
   }
 
   //Kalman gain K;
@@ -339,7 +328,6 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   //residual
   VectorXd z = meas_package.raw_measurements_;
   VectorXd z_diff = z - z_pred;
-
   //angle normalization
   while (z_diff(1)> M_PI) z_diff(1) -= 2.*M_PI;
   while (z_diff(1)<-M_PI) z_diff(1) += 2.*M_PI;
