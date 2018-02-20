@@ -189,8 +189,8 @@ void UKF::Prediction(double delta_t) {
 	//create augmented mean state
 	VectorXd x_aug(n_aug_);
 	x_aug.head(n_x_) = x_;
+	x_aug(n_x_) = 0;
 	x_aug(n_x_+1) = 0;
-	x_aug(n_x_+2) = 0;
 	cout << "Checkpoint x_aug " << x_aug << endl;
 	//create augmented covariance matrix
 	MatrixXd P_aug(n_aug_, n_aug_);
