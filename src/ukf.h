@@ -34,6 +34,9 @@ public:
   ///* time when the state is true, in us
   long long time_us_;
 
+  // timestamp in s
+  double previous_timestamp_;
+
   ///* Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
 
@@ -55,6 +58,10 @@ public:
   ///* Radar measurement noise standard deviation radius change in m/s
   double std_radrd_ ;
 
+  // Measurement noise covariance matrix
+  MatrixXd R_lidar_;
+  MatrixXd R_radar_;
+
   ///* Weights of sigma points
   VectorXd weights_;
 
@@ -67,6 +74,9 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  // NIS (Normalized Innovation squared)
+  double NIS_lidar_;
+  double NIS_radar_;
 
   /**
    * Constructor
