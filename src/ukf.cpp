@@ -76,7 +76,7 @@ UKF::UKF() {
   lambda_ = 3 - n_aug_;
 
   // Weights of sigma points
-  weights_ = VectorXd(n_aug_);
+  weights_ = VectorXd(2*n_aug_+1);
   weights_.fill(1 / (2 * (lambda_ + n_aug_)));
   weights_(0) = lambda_ / (lambda_ + n_aug_);
 
@@ -183,36 +183,30 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-	cout << "Checkpoint Prediction called " << endl;
-  // Generate sigma points
-
-	//create augmented mean state
+  // 1) Generate sigma points
+  //create augmented mean state
 	VectorXd x_aug(n_aug_);
 	x_aug.head(n_x_) = x_;
 	x_aug(n_x_) = 0;
 	x_aug(n_x_+1) = 0;
-	cout << "Checkpoint x_aug " << x_aug << endl;
-	//create augmented covariance matrix
-	MatrixXd P_aug(n_aug_, n_aug_);
-	P_aug.fill(0.0);
-	P_aug.topLeftCorner(n_x_, n_x_) = P_;
-	P_aug(5, 5) = std_a_ * std_a_;
-	P_aug(6, 6) = std_yawdd_ * std_yawdd_;
+  //create augmented covariance matrix
+  MatrixXd P_aug(n_aug_, n_aug_);
+  P_aug.fill(0.0);
+  P_aug.topLeftCorner(n_x_, n_x_) = P_;
+  P_aug(5, 5) = std_a_ * std_a_;
+  P_aug(6, 6) = std_yawdd_ * std_yawdd_;
+  //create square root of matrix
+  MatrixXd L = P_aug.llt().matrixL();
 
-	cout << "Checkpoint augmented" << endl;
-	//create square root matrix
-	MatrixXd L = P_aug.llt().matrixL();
+  //create augmented sigma points
+  MatrixXd Xsig_aug(n_aug_, 2 * n_aug_ + 1);
+  Xsig_aug.col(0) = x_aug;
+  for (int i = 0; i< n_aug_; i++) {
+	Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
+	Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) * L.col(i);
+  }
 
-	//create augmented sigma points
-	MatrixXd Xsig_aug(n_aug_, 2 * n_aug_ + 1);
-	Xsig_aug.col(0) = x_aug;
-	for (int i = 0; i< n_aug_; i++)
-	{
-		Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) * L.col(i);
-		Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) * L.col(i);
-	}
-	cout << "Checkpoint xsig_aug " << endl;
-  // Predict sigma points after time delta_t
+  // 2) Predict sigma points after time delta_t
 	for (int i = 0; i<2 * n_aug_ + 1; i++) {
 		VectorXd x = Xsig_aug.col(i);
 		float v = x(2);
@@ -237,19 +231,17 @@ void UKF::Prediction(double delta_t) {
 
 		Xsig_pred_.col(i) = x.head(5);
 	}
-	cout << "Checkpoint xsig_pred" << endl;
-  // Predict mean state and state covariance matrix
-	//predict state mean
-	x_.fill(0.0);
-	for (int i = 0; i<2 * n_aug_ + 1; i++) {
-		x_ += weights_(i) * Xsig_pred_.col(i);
-	}
 
-	//predict state covariance matrix
-	P_.fill(0.0);
-	for (int i = 0; i<2 * n_aug_ + 1; i++) {
-		P_ += weights_(i) * (Xsig_pred_.col(i) - x_) * (Xsig_pred_.col(i) - x_).transpose();
-	}
+  // 3) Predict mean state and state covariance matrix
+	//predict state mean
+  x_.fill(0.0);
+  for (int i = 0; i<2 * n_aug_ + 1; i++)
+	x_ += weights_(i) * Xsig_pred_.col(i);
+
+  //predict state covariance matrix
+  P_.fill(0.0);
+  for (int i = 0; i<2 * n_aug_ + 1; i++) 
+	P_ += weights_(i) * (Xsig_pred_.col(i) - x_) * (Xsig_pred_.col(i) - x_).transpose();
 }
 
 /**
