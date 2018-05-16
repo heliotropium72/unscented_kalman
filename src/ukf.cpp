@@ -35,10 +35,10 @@ UKF::UKF() {
 
   // TUNE THESE TWO NOISE PARAMETERS !!!
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.8; // 1 -> 0.0646, 0.0825, 0.2897, 0.3334
+  std_a_ = 2; // 1 -> 0.0646, 0.0825, 0.2897, 0.3334
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.8;
+  std_yawdd_ = 0.5;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -139,8 +139,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 		// (initial) state covariance matrix
 		P_ = MatrixXd(5, 5);
 		P_.fill(0.0);
-		P_(0, 0) = 0.75;//0.5;
-		P_(1, 1) = 0.75;//0.5;
+		P_(0, 0) = 0.1;//0.5;
+		P_(1, 1) = 0.1;//0.5;
 		P_(2, 2) = 1;
 		P_(3, 3) = 1;
 		P_(4, 4) = 1;
