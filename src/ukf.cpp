@@ -139,8 +139,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 		// (initial) state covariance matrix
 		P_ = MatrixXd(5, 5);
 		P_.fill(0.0);
-		P_(0, 0) = 0.5;
-		P_(1, 1) = 0.5;
+		P_(0, 0) = 0.75;//0.5;
+		P_(1, 1) = 0.75;//0.5;
 		P_(2, 2) = 1;
 		P_(3, 3) = 1;
 		P_(4, 4) = 1;
